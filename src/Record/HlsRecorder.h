@@ -15,8 +15,11 @@
 #include "MPEG.h"
 #include "MP4Muxer.h"
 #include "Common/config.h"
+#include "Thread/ThreadPool.h"
 
 namespace mediakit {
+
+toolkit::ThreadPool& getHlsThread();
 
 template <typename Muxer>
 class HlsRecorderBase : public MediaSourceEventInterceptor, public Muxer, public std::enable_shared_from_this<HlsRecorderBase<Muxer> > {
@@ -58,6 +61,15 @@ public:
     }
 
     bool inputFrame(const Frame::Ptr &frame) override {
+        auto ptr = this->shared_from_this();
+        auto cached_frame = Frame::getCacheAbleFrame(frame);
+        getHlsThread().async([ptr, cached_frame]() {
+            ptr->inputFrame_l(cached_frame);
+        });
+        return true;
+    }
+
+    bool inputFrame_l(const Frame::Ptr &frame) {
         if (_clear_cache && _option.hls_demand) {
             _clear_cache = false;
             // 清空旧的m3u8索引文件于ts切片  [AUTO-TRANSLATED:a4ce0664]
