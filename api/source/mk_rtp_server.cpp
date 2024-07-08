@@ -1,9 +1,9 @@
 ﻿/*
- * Copyright (c) 2016 The ZLMediaKit project authors. All Rights Reserved.
+ * Copyright (c) 2016-present The ZLMediaKit project authors. All Rights Reserved.
  *
- * This file is part of ZLMediaKit(https://github.com/xia-chu/ZLMediaKit).
+ * This file is part of ZLMediaKit(https://github.com/ZLMediaKit/ZLMediaKit).
  *
- * Use of this source code is governed by MIT license that can be found in the
+ * Use of this source code is governed by MIT-like license that can be found in the
  * LICENSE file in the root of the source tree. All contributing project authors
  * may be found in the AUTHORS file in the root of the source tree.
  */
@@ -56,7 +56,7 @@ API_EXPORT void API_CALL mk_rtp_server_set_on_detach2(mk_rtp_server ctx, on_mk_r
     RtpServer::Ptr *server = (RtpServer::Ptr *) ctx;
     if (cb) {
         std::shared_ptr<void> ptr(user_data, user_data_free ? user_data_free : [](void *) {});
-        (*server)->setOnDetach([cb, ptr]() {
+        (*server)->setOnDetach([cb, ptr](const SockException &ex) {
             cb(ptr.get());
         });
     } else {
