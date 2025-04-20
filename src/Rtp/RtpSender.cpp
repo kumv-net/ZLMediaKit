@@ -35,7 +35,11 @@ RtpSender::~RtpSender() {
     }
 }
 
-void RtpSender::startSend(const MediaSourceEvent::SendRtpArgs &args, const function<void(uint16_t local_port, const SockException &ex)> &cb){
+void RtpSender::startSend(const MediaSource &sender, const MediaSourceEvent::SendRtpArgs &args, const function<void(uint16_t local_port, const SockException &ex)> &cb){
+    try {
+        _origin_socket = dynamic_pointer_cast<Socket>(sender.getOriginSock());
+    } catch (...) {
+    }
     _args = args;
     if (!_interface) {
         // 重连时不重新创建对象  [AUTO-TRANSLATED:b788cd5d]
@@ -313,6 +317,15 @@ void RtpSender::onConnect() {
             }
         });
     }
+
+    if (_socket_rtp->sockType() == toolkit::SockNum::Sock_TCP && _origin_socket) {
+        // rtp 端口是TCP端口，转发速度应当控制收流速度
+        auto origin_socket = _origin_socket;
+        _socket_rtp->setOnFlush([origin_socket]() {
+            origin_socket->enableRecv(true);
+            return true;
+        });
+    }
     InfoL << "startSend rtp success: " << _socket_rtp->get_peer_ip() << ":" << _socket_rtp->get_peer_port() << ", data_type: " << _args.data_type << ", con_type: " << _args.con_type;
 }
 
@@ -432,6 +445,9 @@ void RtpSender::onFlushRtpList(shared_ptr<List<Buffer::Ptr>> rtp_list) {
                     break;
                 }
                 default: CHECK(0);
+            }
+            if (_socket_rtp->sockType() == toolkit::SockNum::Sock_TCP && _socket_rtp->isSocketBusy()) {
+                _socket_rtp->enableRecv(false);
             }
         });
     };
