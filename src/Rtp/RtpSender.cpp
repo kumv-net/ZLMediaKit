@@ -40,6 +40,15 @@ void RtpSender::startSend(const MediaSource &sender, const MediaSourceEvent::Sen
         _origin_socket = dynamic_pointer_cast<Socket>(sender.getOriginSock());
     } catch (...) {
     }
+    if (!_origin_socket) {
+        try {
+            auto process = dynamic_pointer_cast<RtpProcess>(sender.getOriginSock());
+            if (process) {
+                _origin_socket = process->getSock();
+            }
+        } catch (...) {
+        }
+    }
     _args = args;
     if (!_interface) {
         // 重连时不重新创建对象  [AUTO-TRANSLATED:b788cd5d]
