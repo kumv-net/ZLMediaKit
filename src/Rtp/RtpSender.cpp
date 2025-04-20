@@ -36,19 +36,15 @@ RtpSender::~RtpSender() {
 }
 
 void RtpSender::startSend(const MediaSource &sender, const MediaSourceEvent::SendRtpArgs &args, const function<void(uint16_t local_port, const SockException &ex)> &cb){
-    try {
-        _origin_socket = dynamic_pointer_cast<Socket>(sender.getOriginSock());
-    } catch (...) {
-    }
+    auto origin_socket = sender.getOriginSock();
+    _origin_socket = dynamic_pointer_cast<Socket>(origin_socket);
     if (!_origin_socket) {
-        try {
-            auto process = dynamic_pointer_cast<RtpProcess>(sender.getOriginSock());
-            if (process) {
-                _origin_socket = process->getSock();
-            }
-        } catch (...) {
+        auto process = dynamic_pointer_cast<RtpProcess>(origin_socket);
+        if (process) {
+            _origin_socket = process->getSock();
         }
     }
+
     _args = args;
     if (!_interface) {
         // 重连时不重新创建对象  [AUTO-TRANSLATED:b788cd5d]
@@ -455,8 +451,8 @@ void RtpSender::onFlushRtpList(shared_ptr<List<Buffer::Ptr>> rtp_list) {
                 }
                 default: CHECK(0);
             }
-            if (_socket_rtp->sockType() == toolkit::SockNum::Sock_TCP && _socket_rtp->isSocketBusy()) {
-                _socket_rtp->enableRecv(false);
+            if (_socket_rtp->sockType() == toolkit::SockNum::Sock_TCP && _socket_rtp->isSocketBusy() && _origin_socket) {
+                _origin_socket->enableRecv(false);
             }
         });
     };
