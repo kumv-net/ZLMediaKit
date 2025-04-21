@@ -125,8 +125,14 @@ void DecoderImp::onDecode(int stream, int codecid, int flags, int64_t pts, int64
     auto frame = Factory::getFrameFromPtr(codec, (char *)data, bytes, dts, pts);
     if (getTrackType(codec) != TrackVideo) {
         onFrame(stream, frame);
+        if (_last_is_keyframe && _video_merge) {
+            // 上次是关键帧，收到音频后，说明帧收齐了
+            _video_merge->flush();
+        }
         return;
     }
+    _last_is_keyframe = frame->keyFrame();
+    _video_merge = &ref.second;
     ref.second.inputFrame(frame, [this, stream, codec](uint64_t dts, uint64_t pts, const Buffer::Ptr &buffer, bool) {
         onFrame(stream, Factory::getFrameFromBuffer(codec, buffer, dts, pts));
     });
