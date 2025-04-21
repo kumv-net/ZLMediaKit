@@ -11,6 +11,7 @@
 #include "Decoder.h"
 #include "PSDecoder.h"
 #include "TSDecoder.h"
+#include "Common/config.h"
 #include "Extension/Factory.h"
 
 #if defined(ENABLE_RTPPROXY) || defined(ENABLE_HLS)
@@ -122,8 +123,9 @@ void DecoderImp::onDecode(int stream, int codecid, int flags, int64_t pts, int64
         WarnL << "Unsupported codec :" << getCodecName(codec);
         return;
     }
+    GET_CONFIG(bool, merge_frame, RtpProxy::kMergeFrame)
     auto frame = Factory::getFrameFromPtr(codec, (char *)data, bytes, dts, pts);
-    if (getTrackType(codec) != TrackVideo) {
+    if (getTrackType(codec) != TrackVideo || !merge_frame) {
         onFrame(stream, frame);
         if (_last_is_keyframe && _video_merge) {
             // 上次是关键帧，收到音频后，说明帧收齐了
