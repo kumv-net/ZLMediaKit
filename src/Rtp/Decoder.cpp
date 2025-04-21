@@ -131,7 +131,7 @@ void DecoderImp::onDecode(int stream, int codecid, int flags, int64_t pts, int64
         }
         return;
     }
-    _last_is_keyframe = frame->keyFrame();
+    _last_is_keyframe = frame->keyFrame() || frame->configFrame();
     _video_merge = &ref.second;
     ref.second.inputFrame(frame, [this, stream, codec](uint64_t dts, uint64_t pts, const Buffer::Ptr &buffer, bool) {
         onFrame(stream, Factory::getFrameFromBuffer(codec, buffer, dts, pts));
