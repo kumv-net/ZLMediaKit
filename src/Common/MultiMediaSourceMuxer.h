@@ -16,14 +16,15 @@
 #include "Common/MediaSink.h"
 #include "Record/Recorder.h"
 #include "Util/RingBuffer.h"
+#include "Rtp/RtpSender.h"
+#include "Record/HlsRecorder.h"
+#include "Record/HlsMediaSource.h"
+#include "Rtsp/RtspMediaSourceMuxer.h"
+#include "Rtmp/RtmpMediaSourceMuxer.h"
+#include "TS/TSMediaSourceMuxer.h"
+#include "FMP4/FMP4MediaSourceMuxer.h"
+
 namespace mediakit {
-class HlsRecorder;
-class HlsFMP4Recorder;
-class RtspMediaSourceMuxer;
-class RtmpMediaSourceMuxer;
-class TSMediaSourceMuxer;
-class FMP4MediaSourceMuxer;
-class RtpSender;
 
 class MultiMediaSourceMuxer : public MediaSourceEventInterceptor, public MediaSink, public std::enable_shared_from_this<MultiMediaSourceMuxer>{
 public:
@@ -245,15 +246,15 @@ private:
     toolkit::Ticker _last_check;
     std::unordered_map<int, Stamp> _stamps;
     std::weak_ptr<Listener> _track_listener;
-    std::unordered_multimap<std::string, RingType::RingReader::Ptr> _rtp_sender;
-    std::shared_ptr<FMP4MediaSourceMuxer> _fmp4;
-    std::shared_ptr<RtmpMediaSourceMuxer> _rtmp;
-    std::shared_ptr<RtspMediaSourceMuxer> _rtsp;
-    std::shared_ptr<TSMediaSourceMuxer> _ts;
-    std::shared_ptr<RtspMediaSourceMuxer> _rtc;
+    std::unordered_multimap<std::string, std::tuple<RingType::RingReader::Ptr, std::weak_ptr<RtpSender>>> _rtp_sender;
+    FMP4MediaSourceMuxer::Ptr _fmp4;
+    RtmpMediaSourceMuxer::Ptr _rtmp;
+    RtspMediaSourceMuxer::Ptr _rtsp;
+    TSMediaSourceMuxer::Ptr _ts;
+    RtspMediaSourceMuxer::Ptr _rtc;
     MediaSinkInterface::Ptr _mp4;
-    std::shared_ptr<HlsRecorder> _hls;
-    std::shared_ptr<HlsFMP4Recorder> _hls_fmp4;
+    HlsRecorder::Ptr _hls;
+    HlsFMP4Recorder::Ptr _hls_fmp4;
     toolkit::EventPoller::Ptr _poller;
     RingType::Ptr _ring;
 
